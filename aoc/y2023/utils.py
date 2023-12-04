@@ -10,7 +10,12 @@ U = (+1, 0)
 D = (-1, 0)
 L = (0, -1)
 R = (0, 1)
+UL = (+1, -1)
+UR = (+1, +1)
+DL = (-1, -1)
+DR = (-1, +1)
 NEIGHBOR4 = U, D, L, R
+NEIGHBOR8 = U, D, L, R, UL, UR, DL, DR
 
 
 def load_data(file_name, load_as="text"):
@@ -59,7 +64,6 @@ def bfs(adj, src, dest):
     # and as no path is yet constructed
     # dist[i] for all i set to infinity
     for i in range(v):
-
         dist[i] = 1000000
         pred[i] = -1
 
@@ -75,7 +79,6 @@ def bfs(adj, src, dest):
         u = queue[0]
         queue.pop(0)
         for i in range(len(adj[u])):
-
             if visited[adj[u][i]] == False:
                 visited[adj[u][i]] = True
                 dist[adj[u][i]] = dist[u] + 1

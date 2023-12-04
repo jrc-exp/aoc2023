@@ -19,6 +19,41 @@ def solve(d):
     result_1, result_2 = 0, 0
     print("INPUT DATA:")
     print(d)
+    max_cubes = {
+        "red": 12,
+        "green": 13,
+        "blue": 14,
+    }
+    result_1 = 0
+    result_2 = 0
+    for row in d:
+        print(row)
+        too_many = False
+        game, rest = row.split(":")
+        id = int(game.split(" ")[1])
+        games = rest.split(";")
+        print(id)
+        most = {
+            "red": 0,
+            "blue": 0,
+            "green": 0,
+        }
+        for game in games:
+            rounds = game.split(",")
+            for round in rounds:
+                num, color = round.strip(" ").split(" ")
+                num = int(num)
+                if num > most[color]:
+                    most[color] = num
+                if num > max_cubes[color]:
+                    too_many = True
+        from math import prod
+
+        result_2 += prod(most.values())
+
+        if not too_many:
+            result_1 += id
+
     return result_1, result_2
 
 
@@ -32,7 +67,7 @@ def main():
         print("**** TEST DATA ****")
         d = load_data("test_day2.txt")
         test_answer_1 = 8
-        test_answer_2 = 0
+        test_answer_2 = 2286
         test_solution_1, test_solution_2 = solve(d)
         assert test_solution_1 == test_answer_1, f"TEST #1 FAILED: TRUTH={test_answer_1}, YOURS={test_solution_1}"
         assert test_solution_2 == test_answer_2, f"TEST #2 FAILED: TRUTH={test_answer_2}, YOURS={test_solution_2}"
