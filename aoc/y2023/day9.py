@@ -19,6 +19,28 @@ def solve(d):
     result_1, result_2 = 0, 0
     print("INPUT DATA:")
     print(d)
+    result_1 = 0
+    for row in d:
+        nums = ints(row.split(" "))
+        rows = [nums]
+        while True:
+            diffs = np.diff(rows[-1])
+            rows.append(list(diffs))
+            if np.all(diffs == 0):
+                break
+        rows[-1].append(0)
+        for idx, row in enumerate(reversed(rows[:-1]), start=1):
+            goal = rows[-idx][-1]
+            row.append(row[-1] + goal)
+
+        # part 2 the short way!
+        val = 0
+        for idx, row in enumerate(reversed(rows[:-1]), start=1):
+            val = row[0] - val
+
+        result_1 += rows[0][-1]
+        result_2 += val
+
     return result_1, result_2
 
 
@@ -26,13 +48,14 @@ def main():
     """Main function"""
     args = ArgumentParser()
     args.add_argument("--skip", action="store_true")
+    args.add_argument("--submit", action="store_true")
     args = args.parse_args()
     # load data:
     if not args.skip:
         print("**** TEST DATA ****")
-        d = load_data("test_day0.txt")
-        test_answer_1 = TEST_ANSWER
-        test_answer_2 = 0
+        d = load_data("test_day9.txt")
+        test_answer_1 = 114
+        test_answer_2 = 2
         test_solution_1, test_solution_2 = solve(d)
         assert test_solution_1 == test_answer_1, f"TEST #1 FAILED: TRUTH={test_answer_1}, YOURS={test_solution_1}"
         assert test_solution_2 == test_answer_2, f"TEST #2 FAILED: TRUTH={test_answer_2}, YOURS={test_solution_2}"
@@ -41,8 +64,10 @@ def main():
         print("My Test Answer 1: ", test_solution_1)
         print("Test Answer 2: ", test_answer_2)
         print("My Test Answer 2: ", test_solution_2)
+
     print("**** REAL DATA ****")
-    day = int("day0".replace("day", ""))
+    day = 9
+    # d = load_data(f"day{day}.txt")
     import os
     from aocd import submit, get_data
 

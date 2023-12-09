@@ -16,13 +16,20 @@ stub_day:
 	@$(eval DAY_FILE := aoc/y2023/day$(DAY).py)
 	@$(eval TEST_DAY_FILE := test/test_day$(DAY).py)
 	@python -m aoc.y2023.get_test $(DAY)
-	@cp -n aoc/y2023/day0.py $(DAY_FILE)
-	@sed -i s/Day\ 0/Day\ $(DAY)/g $(DAY_FILE)
-	@sed -i s/day0/day$(DAY)/g $(DAY_FILE)
-	@sed -i s/TEST_ANSWER/`cat inputs/test_day$(DAY)_answer.txt`/g $(DAY_FILE)
-	@cp -n test/test_day0.py $(TEST_DAY_FILE)
-	@sed -i s/Day\ 0/Day\ $(DAY)/g $(TEST_DAY_FILE)
-	@sed -i s/day0/day$(DAY)/g $(TEST_DAY_FILE)
+	-@cp -n aoc/y2023/day0.py $(DAY_FILE)
+	sed -i '' s/Day\ 0/Day\ $(DAY)/g $(DAY_FILE)
+	sed -i '' s/day0/day$(DAY)/g $(DAY_FILE)
+	sed -i '' "s/TEST_ANSWER/`cat inputs/test_day$(DAY)_answer.txt`/g" $(DAY_FILE)
+	cp -n test/test_day0.py $(TEST_DAY_FILE)
+	sed -i '' s/Day\ 0/Day\ $(DAY)/g $(TEST_DAY_FILE)
+	sed -i '' s/day0/day$(DAY)/g $(TEST_DAY_FILE)
+
+	# @sed -i s/Day\ 0/Day\ $(DAY)/g $(DAY_FILE)
+	# @sed -i s/day0/day$(DAY)/g $(DAY_FILE)
+	# @sed -i s/TEST_ANSWER/`cat inputs/test_day$(DAY)_answer.txt`/g $(DAY_FILE)
+	# @cp -n test/test_day0.py $(TEST_DAY_FILE)
+	# @sed -i s/Day\ 0/Day\ $(DAY)/g $(TEST_DAY_FILE)
+	# @sed -i s/day0/day$(DAY)/g $(TEST_DAY_FILE)
 	@curl \
 		-X GET \
 		-H "Cookie: session=${AOC_SESSION}" \
@@ -30,9 +37,6 @@ stub_day:
 		"https://adventofcode.com/2023/day/${DAY}/input"
 	# just use VScode so no need to open vim
 	# @gnome-terminal -x bash -ic "vi $(DAY_FILE); bash" &
-	@if grep -q day$(DAY) setup.cfg; then echo exists; \
-		else echo "  run_day$(DAY) = aoc.y2023.day$(DAY):main" >> setup.cfg && \
-		pip install --no-deps -e .; fi
 	@run_day$(DAY)
 
 precommit: run_format run_pylint run_pytest

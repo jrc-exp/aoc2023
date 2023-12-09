@@ -4,6 +4,7 @@ import sys
 from argparse import ArgumentParser
 from collections import Counter, defaultdict
 from itertools import permutations, product
+from typing import List
 
 import numpy as np
 
@@ -101,7 +102,45 @@ What is the lowest location number that corresponds to any of the initial seed n
 """
 
 
-maps = defaultdict(list)
+def map_src_to_dest(start, stop, list_of_maps: List[tuple]):
+    assert start <= stop
+    result = []
+    found_start = False
+    for d_rng, s_rng, length in list_of_maps:
+        if s_rng <= start < s_rng + length:
+            start_out = d_rng + (start - s_rng)
+            found_start = True
+        if s_rng <= stop < s_rng + length:
+            stop_out = d_rng + (stop - s_rng)
+            if "start_out" not in locals():
+                print(start, stop, s_rng, s_rng + length)
+            result.append((start_out, stop_out))
+            break
+        if found_start:
+            result.append((start_out, d_rng + length - 1))
+            start = s_rng + length
+            start_out = d_rng + length
+            found_start = False
+    else:
+        result.append((start, stop))
+    assert all([a <= b for a, b in result])
+    result = sorted(result, key=lambda x: x[0])
+    return result
+
+
+def fill_in_source_gaps(list_of_maps):
+    """
+    Fill in gaps in source ranges
+    """
+    result = [(0, 0, 0)]
+    for d_rng, s_rng, length in list_of_maps:
+        if not result:
+            result.append((d_rng, s_rng, length))
+            continue
+        if s_rng != result[-1][1] + result[-1][2]:
+            result.append((result[-1][1] + result[-1][2], result[-1][1] + result[-1][2], s_rng - result[-1][1] - result[-1][2]))
+        result.append((d_rng, s_rng, length))
+    return result[1:]
 
 
 def solve(d):
@@ -111,6 +150,7 @@ def solve(d):
     print(d)
     seeds = ints(d[0].split(":")[1].strip(" ").split(" "))
     print(seeds)
+    maps = defaultdict(list)
     for row in d[1:]:
         from string import ascii_lowercase as alphabet
 
@@ -121,43 +161,35 @@ def solve(d):
             source, destination = row.split(" ")[0].split("-")[::2]
             continue
         if row[0] in "0123456789":
-            destination_range, source_range, length = ints(row.split(" "))
-            maps[(source, destination)].append((destination_range, source_range, length))
+            d_rng, s_rng, length = ints(row.split(" "))
+            maps[(source, destination)].append((d_rng, s_rng, length))
 
-    # for seed in seeds:
-
-    from tqdm.auto import tqdm
-
-    locations = []
-    for seed in tqdm(seeds):
+    result_1 = float("inf")
+    for seed in seeds:
         val = seed
         for key in maps.keys():
-            for destination_range, source_range, length in maps[key]:
-                if source_range <= val < source_range + length:
-                    val = destination_range + (val - source_range)
+            for d_rng, s_rng, length in maps[key]:
+                if s_rng <= val < s_rng + length:
+                    val = d_rng + (val - s_rng)
                     break
 
-        locations.append(val)
-
-    result_1 = min(locations)
+        result_1 = min(result_1, val)
 
     # part 2:
     seed_starts = seeds[::2]
     seed_ranges = seeds[1::2]
-    total_seeds = sum(seed_ranges)
-    print(total_seeds)
-    seeds = []
-    result_2 = float("inf")
-    for start, end in tqdm(zip(seed_starts, seed_ranges)):
-        for seed in tqdm(range(start, start + end)):
-            val = seed
-            for key in maps.keys():
-                for destination_range, source_range, length in maps[key]:
-                    if source_range <= val < source_range + length:
-                        val = destination_range + (val - source_range)
-                        break
-            result_2 = min(result_2, val)
+    seeds = [(start, start + end - 1) for start, end in zip(seed_starts, seed_ranges)]
 
+    locations = sorted(seeds)
+    for key in maps.keys():
+        next_locations = []
+        maps[key] = sorted(maps[key], key=lambda x: x[1])
+        maps[key] = fill_in_source_gaps(maps[key])
+        for start, stop in locations:
+            next_locations.extend(map_src_to_dest(start, stop, maps[key]))
+        locations = sorted(next_locations, key=lambda x: x[0])
+
+    result_2 = sorted(locations)[0][0]
     return result_1, result_2
 
 
