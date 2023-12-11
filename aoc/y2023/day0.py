@@ -26,6 +26,7 @@ def main():
     """Main function"""
     args = ArgumentParser()
     args.add_argument("--skip", action="store_true")
+    args.add_argument("--submit", action="store_true")
     args = args.parse_args()
     # load data:
     if not args.skip:

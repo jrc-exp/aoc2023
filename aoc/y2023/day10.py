@@ -1,5 +1,6 @@
-""" Day 0 Solutions """
+""" Day 10 Solutions """
 
+from operator import ne
 import sys
 from argparse import ArgumentParser
 from collections import Counter, defaultdict
@@ -7,11 +8,29 @@ from itertools import permutations, product
 
 import numpy as np
 
-from aoc.y2023.utils import load_data
+from aoc.y2023.utils import load_data, NEIGHBOR4, NEIGHBOR8
+
+N4 = NEIGHBOR4
+N, S, E, W = ((-1, 0), (1, 0), (0, 1), (0, -1))
 
 
 def ints(x):
     return list(map(int, x))
+
+
+pipe_map = {
+    "|": (N, S),
+    "-": (E, W),
+    "L": (N, E),
+    "J": (N, W),
+    "7": (S, W),
+    "F": (S, E),
+    "S": NEIGHBOR8,
+}
+
+
+def move(loc, dir):
+    return loc[0] + dir[0], loc[1] + dir[1]
 
 
 def solve(d):
@@ -19,27 +38,45 @@ def solve(d):
     result_1, result_2 = 0, 0
     print("INPUT DATA:")
     print(d)
-    result_1 = 0
-    for row in d:
-        nums = ints(row.split(" "))
-        rows = [nums]
-        while True:
-            diffs = np.diff(rows[-1])
-            rows.append(list(diffs))
-            if np.all(diffs == 0):
-                break
-        rows[-1].append(0)
-        for idx, row in enumerate(reversed(rows[:-1]), start=1):
-            goal = rows[-idx][-1]
-            row.append(row[-1] + goal)
 
-        # part 2 the short way!
-        val = 0
-        for idx, row in enumerate(reversed(rows[:-1]), start=1):
-            val = row[0] - val
+    grid = dict()
+    neighbors = dict()
+    for idy, row in enumerate(d):
+        for idx, c in enumerate(row):
+            loc = (idy, idx)
+            grid[loc] = float("inf")
+            if c in pipe_map:
+                neighbors[loc] = [move(loc, conn) for conn in pipe_map[c]]
+            if c == "S":
+                start = loc
+                grid[start] = 0
 
-        result_1 += rows[0][-1]
-        result_2 += val
+    connections = defaultdict(set)
+    for loc in neighbors:
+        for neighbor in neighbors[loc]:
+            if neighbor in neighbors and loc in neighbors[neighbor]:
+                connections[loc].add(neighbor)
+                connections[neighbor].add(loc)
+
+    loc = start
+
+    def print_grid(grid):
+        for idy in range(len(d)):
+            row = ""
+            for idx in range(len(d[0])):
+                row += str(grid[(idy, idx)] if grid[(idy, idx)] != float("inf") else ".")
+
+    locs = [start]
+    while locs:
+        next_locs = set()
+        for loc in locs:
+            for c in connections[loc]:
+                if grid[c] > grid[loc] + 1:
+                    grid[c] = grid[loc] + 1
+                    if grid[loc] + 1 > result_1:
+                        result_1 = grid[loc] + 1
+                    next_locs.add(c)
+        locs = next_locs
 
     return result_1, result_2
 
@@ -53,9 +90,9 @@ def main():
     # load data:
     if not args.skip:
         print("**** TEST DATA ****")
-        d = load_data("test_day9.txt")
-        test_answer_1 = 114
-        test_answer_2 = 2
+        d = load_data("test_day10.txt")
+        test_answer_1 = 8
+        test_answer_2 = 0
         test_solution_1, test_solution_2 = solve(d)
         assert test_solution_1 == test_answer_1, f"TEST #1 FAILED: TRUTH={test_answer_1}, YOURS={test_solution_1}"
         assert test_solution_2 == test_answer_2, f"TEST #2 FAILED: TRUTH={test_answer_2}, YOURS={test_solution_2}"
@@ -64,9 +101,8 @@ def main():
         print("My Test Answer 1: ", test_solution_1)
         print("Test Answer 2: ", test_answer_2)
         print("My Test Answer 2: ", test_solution_2)
-
     print("**** REAL DATA ****")
-    day = 9
+    day = int("day10".replace("day", ""))
     import os
     from aocd import submit, get_data
 

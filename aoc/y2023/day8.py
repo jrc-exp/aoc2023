@@ -1,9 +1,10 @@
-""" Day 0 Solutions """
+""" Day 8 Solutions """
 
+from math import prod
 import sys
 from argparse import ArgumentParser
 from collections import Counter, defaultdict
-from itertools import permutations, product
+from itertools import cycle, permutations, product
 
 import numpy as np
 
@@ -19,27 +20,60 @@ def solve(d):
     result_1, result_2 = 0, 0
     print("INPUT DATA:")
     print(d)
-    result_1 = 0
-    for row in d:
-        nums = ints(row.split(" "))
-        rows = [nums]
-        while True:
-            diffs = np.diff(rows[-1])
-            rows.append(list(diffs))
-            if np.all(diffs == 0):
-                break
-        rows[-1].append(0)
-        for idx, row in enumerate(reversed(rows[:-1]), start=1):
-            goal = rows[-idx][-1]
-            row.append(row[-1] + goal)
+    directions = d[0]
+    directions = cycle(directions)
+    maps = {}
+    L = 0
+    R = 1
+    dirs = {
+        "L": L,
+        "R": R,
+    }
+    for row in d[2:]:
+        row = row.replace(" ", "")
+        node, other = row.split("=")
+        left, right = other.split(",")
+        left = left[1:]
+        right = right[:-1]
+        maps[node] = (left, right)
 
-        # part 2 the short way!
-        val = 0
-        for idx, row in enumerate(reversed(rows[:-1]), start=1):
-            val = row[0] - val
+    start = "AAA"
+    goal = "ZZZ"
+    node = start
+    ct = 0
+    if "AAA" in maps:
+        while node != goal:
+            ct += 1
+            dir = next(directions)
+            node = maps[node][dirs[dir]]
+        result_1 = ct
 
-        result_1 += rows[0][-1]
-        result_2 += val
+    # part 2
+    starts = [key for key in maps if key[-1].lower() == "a"]
+    stops = [key for key in maps if key[-1].lower() == "z"]
+    for start in starts:
+        print(start)
+    for stop in stops:
+        print(stop)
+    directions = d[0]
+    directions = cycle(directions)
+    cts = []
+    for start in starts:
+        ct = 0
+        while not start.endswith("Z"):
+            dir = next(directions)
+            start = maps[start][dirs[dir]]
+            ct += 1
+        cts.append(ct)
+
+    import math
+
+    def lcm(a, b):
+        return abs(a * b) // math.gcd(a, b)
+
+    result_2 = cts[0]
+    for ct in cts[1:]:
+        result_2 = lcm(result_2, ct)
 
     return result_1, result_2
 
@@ -53,10 +87,12 @@ def main():
     # load data:
     if not args.skip:
         print("**** TEST DATA ****")
-        d = load_data("test_day9.txt")
-        test_answer_1 = 114
-        test_answer_2 = 2
+        d = load_data("test_day8.txt")
+        d2 = load_data("test_day8_p2.txt")
+        test_answer_1 = 2
+        test_answer_2 = 6
         test_solution_1, test_solution_2 = solve(d)
+        _, test_solution_2 = solve(d2)
         assert test_solution_1 == test_answer_1, f"TEST #1 FAILED: TRUTH={test_answer_1}, YOURS={test_solution_1}"
         assert test_solution_2 == test_answer_2, f"TEST #2 FAILED: TRUTH={test_answer_2}, YOURS={test_solution_2}"
         print("**** TESTS PASSED ****")
@@ -64,9 +100,8 @@ def main():
         print("My Test Answer 1: ", test_solution_1)
         print("Test Answer 2: ", test_answer_2)
         print("My Test Answer 2: ", test_solution_2)
-
     print("**** REAL DATA ****")
-    day = 9
+    day = int("day8".replace("day", ""))
     import os
     from aocd import submit, get_data
 
